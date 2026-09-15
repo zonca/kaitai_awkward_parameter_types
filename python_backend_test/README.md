@@ -94,11 +94,12 @@ and every header value matches `info_00088.txt`. `pytest`: **3 passed**
 
 ## Observations / open questions
 
-- Each `amr_00088.out000NN` file yields a different `ngrid_current` and
-  different per-level `non_empty` counts, i.e. each file holds **per-CPU** AMR
-  data. The `.ksy` reads the header plus a `cpu_info` record for every
-  `(level, cpu)` whose `numbl` is nonzero, so per-file results are valid but
-  the interpretation of "one record per nonzero numbl entry" may not yet
-  capture all grids per CPU. Worth confirming with Matt/Amy.
+- Cross-checked against **yt** (see `../yt_comparison_test/`): the global header
+  parameters match exactly, and Kaitai's `numbl` values reproduce yt's per-domain
+  oct array for the finest populated level, so `numbl` is read correctly.
+- The remaining question: a domain's *leaf octs* (yt `local_oct_count`) is not the
+  sum of its per-level grid counts, so mapping RAMSES grids to yt octs needs a
+  RAMSES-grid-to-oct rule (which grids are leaves vs ancestors). Worth confirming
+  with Matt/Amy.
 - The `.ksy` uses `ks-opaque-types: true` and `.as<u4>` type casts; both are
   supported by the Kaitai compiler used (v0.11.0).

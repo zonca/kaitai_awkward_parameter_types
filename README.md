@@ -12,6 +12,7 @@ Kaitai Struct spec (`ramses_amr.ksy`) and its generated Python parser
 | `ramses_amr.py` | **Generated** parser (compiled with `ksc`, the official Kaitai Struct Compiler v0.11). |
 | `requirements.txt` | Runtime deps (`kaitaistruct>=0.11`, `pytest`). |
 | `python_backend_test/` | The test harness (see its README). |
+| `yt_comparison_test/` | Cross-checks the Kaitai parse against `yt` (see its README). |
 
 ## Environment
 
