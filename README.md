@@ -33,8 +33,9 @@ curl -sL -o ksc.deb \
   "https://github.com/kaitai-io/kaitai_struct_compiler/releases/download/0.11/kaitai-struct-compiler_0.11_all.deb"
 sudo apt-get install -y ./ksc.deb
 
-# regenerate the parser from the .ksy spec
-ksc -t python --outdir . ramses_amr.ksy
+# regenerate the parser from the .ksy spec (--read-pos records byte offsets,
+# used by the annotated-structure tool in python_backend_test/)
+ksc -t python --read-pos --outdir . ramses_amr.ksy
 ```
 
 (`ksc` emits a few style warnings for this spec — `num_vector` vs `nrows`,

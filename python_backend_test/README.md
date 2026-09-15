@@ -19,6 +19,8 @@ AMR structure and checking it against the values recorded in the simulation's
 | `parse_amr.py` | CLI: parse a file and print the structure. |
 | `test_ramses_amr.py` | pytest: asserts the parser consumes the whole file and the header matches `info_00088.txt`. |
 | `verified_output.txt` | The captured verified output shown below. |
+| `annotate_structure.py` | Emits an annotated dump (byte offset, size, value, comment) plus a legend of every Kaitai type. |
+| `annotated_structure.txt` | The generated annotated structure for the sample file. |
 
 The `.ksy` spec and generated parser live at the **repo root** (see the root
 `README.md` for setup and data download).
@@ -35,6 +37,21 @@ python python_backend_test/parse_amr.py ramses_rt_00088/output_00088/amr_00088.o
 # Assertion test (sample path can be overridden via RAMSES_AMR_SAMPLE)
 python -m pytest python_backend_test/test_ramses_amr.py -v
 ```
+
+## Annotated structure
+
+For the byte-level layout, generate the annotated dump (requires the parser
+built with `ksc --read-pos`, which it is):
+
+```bash
+python python_backend_test/annotate_structure.py \
+  ramses_rt_00088/output_00088/amr_00088.out00001 \
+  > python_backend_test/annotated_structure.txt
+```
+
+It writes `annotated_structure.txt`, which lists every field with its byte
+offset, byte size, value (or compact summary) and a human annotation, plus a
+legend of all the Kaitai types in `ramses_amr.ksy`.
 
 ## Verified output (`amr_00088.out00001`)
 
