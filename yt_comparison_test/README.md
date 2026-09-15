@@ -46,11 +46,12 @@ python compare_with_yt.py > yt_comparison_report.md
 - **Global parameters** (`ncpu`, `nlevelmax`, `boxlen`, `ordering`, `ngridmax`,
   `current_time`) — these match between yt and Kaitai, independently validating
   the **header** portion of the `.ksy`.
-- **Grid counts** — yt's `local_oct_count` (leaf octs per domain) vs Kaitai's
-  per-level `numbl`. Kaitai's `numbl` values reproduce yt's per-domain oct array
-  for the finest populated level, so `numbl` is read correctly. But a domain's
-  *leaf octs* are not the sum of its per-level grid counts, so equating the two
-  needs a RAMSES-grid-to-yt-oct mapping — the remaining piece to confirm with
-  Matt/Amy.
+- **Grid counts** — reading each CPU's own `amr_*.outNNN` file and computing
+  `numbl[min_level:, cpu].sum()` reproduces yt's per-domain `local_oct_count`
+  **exactly for all 16 CPUs**.
 
-The full result is in `yt_comparison_report.md`.
+**Conclusion: the open question is resolved.** `numbl` is read identically by
+Kaitai and yt; the AMR data is genuinely **per-CPU** (each `amr_*.outNNN` file
+holds that CPU's own `numbl`), and `yt`'s per-domain oct count is simply
+`numbl[min_level:, cpu].sum()`. To recover the full structure you parse one
+file per CPU. The full result is in `yt_comparison_report.md`.

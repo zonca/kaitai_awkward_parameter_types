@@ -94,12 +94,12 @@ and every header value matches `info_00088.txt`. `pytest`: **3 passed**
 
 ## Observations / open questions
 
-- Cross-checked against **yt** (see `../yt_comparison_test/`): the global header
-  parameters match exactly, and Kaitai's `numbl` values reproduce yt's per-domain
-  oct array for the finest populated level, so `numbl` is read correctly.
-- The remaining question: a domain's *leaf octs* (yt `local_oct_count`) is not the
-  sum of its per-level grid counts, so mapping RAMSES grids to yt octs needs a
-  RAMSES-grid-to-oct rule (which grids are leaves vs ancestors). Worth confirming
-  with Matt/Amy.
+- The open question is **resolved** by the `yt` cross-check (see
+  `../yt_comparison_test/`): `numbl` is read identically by Kaitai and yt, the
+  AMR data is genuinely **per-CPU** (each `amr_*.outNNN` file holds that CPU's own
+  `numbl`), and `yt`'s per-domain oct count is `numbl[min_level:, cpu].sum()`.
+  Kaitai reproduces yt's count exactly for all 16 CPUs.
+- So each `.ksy` parse of a single `amr_*.outNNN` file correctly yields that CPU's
+  structure; to reconstruct the whole AMR tree you parse all `ncpu` files.
 - The `.ksy` uses `ks-opaque-types: true` and `.as<u4>` type casts; both are
   supported by the Kaitai compiler used (v0.11.0).
