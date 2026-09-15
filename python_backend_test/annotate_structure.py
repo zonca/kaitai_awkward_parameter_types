@@ -3,9 +3,10 @@
 Generate an annotated dump of a RAMSES AMR file parsed with the standard
 Kaitai Python backend (generated with `ksc --read-pos`).
 
-For every field it prints: byte offset, byte size, the parsed value (or a
-compact summary), and a human annotation. It also includes a legend of every
-Kaitai type used in `ramses_amr.ksy` and how each maps to the binary layout.
+For every field it prints: byte offset, byte size (human readable), the parsed
+value (or a compact summary), and a human annotation. It also includes a legend
+of every Kaitai type used in `ramses_amr.ksy` and how each maps to the binary
+layout.
 
 Usage:
     python annotate_structure.py <amr_file> > annotated_structure.txt
@@ -84,6 +85,18 @@ HEADER_NOTES = {
 }
 
 
+def hsize(n):
+    """Human-readable byte size: 12 B, 520 B, 2.3 KB, 3.5 MB, ..."""
+    n = float(n)
+    if n < 1024:
+        return "%d B" % n
+    for unit in ("KB", "MB", "GB", "TB"):
+        n /= 1024.0
+        if n < 1024:
+            return "%.1f %s" % (n, unit)
+    return "%.1f PB" % (n / 1024.0)
+
+
 def _fmt(val, limit=6):
     # compact value summary for long lists
     if isinstance(val, list):
@@ -92,10 +105,6 @@ def _fmt(val, limit=6):
         extra = ", ..." if n > limit else ""
         return "[%s%s] (n=%d)" % (head, extra, n)
     return str(val)
-
-
-def line(offset, size, name, value, note):
-    print("  %08x  %8d  %-14s = %-42s  # %s" % (offset, size, name, value, note))
 
 
 def size_of(d, name):
@@ -113,7 +122,7 @@ def offset_of(d, name):
 
 
 def dump_header(h, out):
-    print("### Header (ramses_header)   offset / byte-size / value / note")
+    print("### Header (ramses_header)   offset / size / value / note")
     d = h._debug
     for name in h.SEQ_FIELDS:
         if not hasattr(h, name):
@@ -125,38 +134,38 @@ def dump_header(h, out):
         note = HEADER_NOTES.get(name, "")
         if isinstance(obj, ramses_amr.RamsesAmr.FortranRecord):
             val = _fmt(obj.value)
-            print("  %08x  %8d  %-14s = %-42s  # %s [%s %s]" % (
-                off, size, name, val, note, cls, obj.record_type))
+            print("  %08x  %-9s  %-14s = %-42s  # %s [%s %s]" % (
+                off, hsize(size), name, val, note, cls, obj.record_type))
         elif isinstance(obj, ramses_amr.RamsesAmr.FortranVector):
             vals = obj.vector.values
-            print("  %08x  %8d  %-14s = %-42s  # %s [%s %s, rec=%d bytes]" % (
-                off, size, name, _fmt(vals), note, cls, obj.record_type,
-                obj.rec_size1))
+            print("  %08x  %-9s  %-14s = %-42s  # %s [%s %s, rec=%s]" % (
+                off, hsize(size), name, _fmt(vals), note, cls, obj.record_type,
+                hsize(obj.rec_size1)))
         elif isinstance(obj, ramses_amr.RamsesAmr.Fortran2dVector):
-            print("  %08x  %8d  %-14s = %-42s  # %s [%s rows x cols, rec=%d]" % (
-                off, size, name, "%dx%d u4 matrix" % (obj.nrows, obj.rec_size1 // obj.nrows),
-                note, cls, obj.rec_size1))
+            print("  %08x  %-9s  %-14s = %-42s  # %s [%s rows x cols, rec=%s]" % (
+                off, hsize(size), name, "%dx%d u4 matrix" % (obj.nrows, obj.rec_size1 // obj.nrows),
+                note, cls, hsize(obj.rec_size1)))
         elif isinstance(obj, ramses_amr.RamsesAmr.Charstring):
-            print("  %08x  %8d  %-14s = %-42s  # %s [%s '%s']" % (
-                off, size, name, repr(obj.contents.strip()), note, cls,
+            print("  %08x  %-9s  %-14s = %-42s  # %s [%s '%s']" % (
+                off, hsize(size), name, repr(obj.contents.strip()), note, cls,
                 obj.contents.strip()))
         elif isinstance(obj, ramses_amr.RamsesAmr.FortranSkip):
-            print("  %08x  %8d  %-14s = %-42s  # %s [%s rec=%d bytes]" % (
-                off, size, name, "<skip %d bytes>" % obj.rec_size1, note, cls,
-                obj.rec_size1))
+            print("  %08x  %-9s  %-14s = %-42s  # %s [%s rec=%s]" % (
+                off, hsize(size), name, "<skip %s>" % hsize(obj.rec_size1), note, cls,
+                hsize(obj.rec_size1)))
         else:
             if isinstance(obj, list):
                 val = "%d items" % len(obj)
             else:
                 val = ""
-            print("  %08x  %8d  %-14s = %-42s  # %s [%s]" % (off, size, name, val, note, cls))
+            print("  %08x  %-9s  %-14s = %-42s  # %s [%s]" % (off, hsize(size), name, val, note, cls))
 
 
 def dump_numbl(h, out):
     nb = h.numbl
+    total = nb._debug["vector"]["end"] - nb._debug["vector"]["start"]
     print("### numbl (grids per level per CPU)  [nlevelmax x ncpu]")
-    print("  total record bytes = %d (rec_size1=%d)" % (
-        nb._debug["vector"]["end"] - nb._debug["vector"]["start"], nb.rec_size1))
+    print("  total record = %s (%d bytes, rec_size1=%s)" % (hsize(total), total, hsize(nb.rec_size1)))
     for lvl, row in enumerate(nb.vector):
         vals = row.values
         nz = sum(1 for v in vals if v != 0)
@@ -173,8 +182,8 @@ def dump_amr_info(r, out):
         size = size_of(d, "cpu_info")
         nonempty = [i for i, c in enumerate(li.cpu_info)
                     if not isinstance(c, ramses_amr.RamsesAmr.EmptyType)]
-        print("  level %d  offset=%08x bytes=%d  cpu_entries=%d  nonempty=%d  cpus=%s" % (
-            li.level, off, size, len(li.cpu_info), len(nonempty), nonempty[:10]))
+        print("  level %d  offset=%08x size=%-9s cpu_entries=%d  nonempty=%d  cpus=%s" % (
+            li.level, off, hsize(size), len(li.cpu_info), len(nonempty), nonempty[:10]))
         if nonempty:
             ci = li.cpu_info[nonempty[0]]
             dump_grid_record(ci, "        ")
@@ -183,26 +192,24 @@ def dump_amr_info(r, out):
 def dump_grid_record(g, ind):
     print(ind + "first nonempty cpu grid record:")
     d = g._debug
-    print(ind + "  -- grid_index (fortran_skip) size=%d" % size_of(d, "grid_index"))
-    print(ind + "  -- grid_next   (fortran_skip) size=%d" % size_of(d, "grid_next"))
-    print(ind + "  -- grid_prev   (fortran_skip) size=%d" % size_of(d, "grid_prev"))
+    for f in ("grid_index", "grid_next", "grid_prev"):
+        print(ind + "  -- %-11s (fortran_skip) size=%s" % (f, hsize(size_of(d, f))))
     for axis in ("pos_x", "pos_y", "pos_z"):
         vec = getattr(g, axis)
         size = size_of(d, axis)
-        print(ind + "  -- %-6s (fortran_vector f8) size=%d  n=%d  head=%s" % (
-            axis, size, len(vec.vector.values), _fmt(vec.vector.values, 3)))
+        print(ind + "  -- %-6s (fortran_vector f8) size=%s  n=%d  head=%s" % (
+            axis, hsize(size), len(vec.vector.values), _fmt(vec.vector.values, 3)))
     fsize = size_of(d, "fields")
-    print(ind + "  -- fields: 31 x fortran_skip, total=%d bytes" % fsize)
+    print(ind + "  -- fields: 31 x fortran_skip, total=%s" % hsize(fsize))
 
 
 def main(path):
     data = open(path, "rb").read()
     r = ramses_amr.RamsesAmr(KaitaiStream(BytesIO(data)))
-    out = sys.stdout
 
     print("# RAMSES AMR annotated structure")
     print("# file : %s" % path)
-    print("# bytes: %d" % len(data))
+    print("# size : %s (%d bytes)" % (hsize(len(data)), len(data)))
     print("# method: standard Kaitai Python backend, parser compiled with ksc --read-pos")
     print("# generated by annotate_structure.py")
     print("")
@@ -213,13 +220,14 @@ def main(path):
     print("")
 
     print("## Header")
-    dump_header(r.header, out)
+    dump_header(r.header, None)
     print("")
-    dump_numbl(r.header, out)
+    dump_numbl(r.header, None)
     print("")
-    dump_amr_info(r, out)
+    dump_amr_info(r, None)
     print("")
-    print("## Total: parsed %d bytes; header+amr_info account for the whole file." % len(data))
+    print("## Total: %s (%d bytes); header + amr_info account for the whole file." % (
+        hsize(len(data)), len(data)))
 
 
 if __name__ == "__main__":
