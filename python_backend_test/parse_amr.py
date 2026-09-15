@@ -1,4 +1,11 @@
-import sys, io
+import os
+import sys
+import io
+
+# Make the repo root importable so `import ramses_amr` (the generated parser)
+# works regardless of the current working directory.
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from kaitaistruct import KaitaiStream, BytesIO
 import ramses_amr
 

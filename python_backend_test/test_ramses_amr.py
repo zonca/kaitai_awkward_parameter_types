@@ -1,4 +1,10 @@
 import os
+import sys
+
+# Make the repo root importable so `import ramses_amr` (the generated parser)
+# works when the test is run from this subfolder.
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import pytest
 from kaitaistruct import KaitaiStream, BytesIO
 import ramses_amr

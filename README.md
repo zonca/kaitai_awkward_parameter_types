@@ -13,13 +13,17 @@ checking it against the values recorded in the simulation's `info_00088.txt`.
 
 ## What's here
 
+The repo root keeps the **reusable** Kaitai spec and generated parser; the test
+harness lives in `python_backend_test/`.
+
 | File | Role |
 |------|------|
-| `ramses_amr.ksy` | Kaitai Struct spec (source: `data-exp-lab/astro-data-formats` `ramses_amr.ksy`). |
-| `ramses_amr.py` | **Generated** parser (compiled with `ksc`, the official Kaitai Struct Compiler v0.11). |
-| `parse_amr.py` | CLI: parse a file and print the structure. |
-| `test_ramses_amr.py` | pytest: asserts the parser consumes the whole file and the header matches `info_00088.txt`. |
-| `verified_output.txt` | The captured verified output shown below. |
+| `ramses_amr.ksy` | Kaitai Struct spec (source: `data-exp-lab/astro-data-formats` `ramses_amr.ksy`). Reused by the tests. |
+| `ramses_amr.py` | **Generated** parser (compiled with `ksc`, the official Kaitai Struct Compiler v0.11). Reused by the tests. |
+| `requirements.txt` | Runtime deps (`kaitaistruct>=0.11`, `pytest`). |
+| `python_backend_test/parse_amr.py` | CLI: parse a file and print the structure. |
+| `python_backend_test/test_ramses_amr.py` | pytest: asserts the parser consumes the whole file and the header matches `info_00088.txt`. |
+| `python_backend_test/verified_output.txt` | The captured verified output shown below. |
 
 ## Environment
 
@@ -70,10 +74,10 @@ nlevelmax=8, ngridmax=1000000, boxlen=6.0, ordering="hilbert", nboundary=0.
 
 ```bash
 # Print the structure
-python parse_amr.py ramses_rt_00088/output_00088/amr_00088.out00001
+python python_backend_test/parse_amr.py ramses_rt_00088/output_00088/amr_00088.out00001
 
 # Assertion test (sample path can be overridden via RAMSES_AMR_SAMPLE)
-python -m pytest -v
+python -m pytest python_backend_test/test_ramses_amr.py -v
 ```
 
 ## Verified output (`amr_00088.out00001`)
