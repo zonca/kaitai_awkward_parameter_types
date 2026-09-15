@@ -16,7 +16,7 @@ checking it against the values recorded in the simulation's `info_00088.txt`.
 | File | Role |
 |------|------|
 | `ramses_amr.ksy` | Kaitai Struct spec (source: `data-exp-lab/astro-data-formats` `ramses_amr.ksy`). |
-| `ramses_amr.py` | **Generated** parser (compiled with the official Kaitai Struct compiler). |
+| `ramses_amr.py` | **Generated** parser (compiled with `ksc`, the official Kaitai Struct Compiler v0.11). |
 | `parse_amr.py` | CLI: parse a file and print the structure. |
 | `test_ramses_amr.py` | pytest: asserts the parser consumes the whole file and the header matches `info_00088.txt`. |
 | `verified_output.txt` | The captured verified output shown below. |
@@ -31,13 +31,22 @@ uv venv .venv --python 3.11
 VIRTUAL_ENV=.venv uv pip install -r requirements.txt
 ```
 
-The parser was generated from the `.ksy` using the **official Kaitai Struct
-compiler (JS build, v0.11.0)** since no JVM/`ksc` was available:
+The parser was generated from the `.ksy` with `ksc` (the official Kaitai
+Struct Compiler, v0.11.0). On Debian/PureOS the compiler and its Java runtime
+are installed with:
 
 ```bash
-npm install kaitai-struct-compiler
-# compile.js:  compiler.compile('python', ksy, null, false)  ->  ramses_amr.py
+sudo apt-get install -y default-jre              # provides java
+curl -sL -o ksc.deb \
+  "https://github.com/kaitai-io/kaitai_struct_compiler/releases/download/0.11/kaitai-struct-compiler_0.11_all.deb"
+sudo apt-get install -y ./ksc.deb
+
+# regenerate the parser from the .ksy spec
+ksc -t python --outdir . ramses_amr.ksy
 ```
+
+(`ksc` emits a few style warnings for this spec — `num_vector` vs `nrows`,
+canonical `ASCII`, etc. — that are harmless.)
 
 ## Data
 
