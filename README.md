@@ -60,6 +60,21 @@ tar -xzf ramses_rt_00088.tar.gz \
 Reference global values (from `info_00088.txt`): ncpu=16, ndim=3,
 nlevelmax=8, ngridmax=1000000, boxlen=6.0, ordering="hilbert", nboundary=0.
 
+## Notes / gotchas
+
+- **`ksc -d` short form fails on Unix** ("Is a directory") — use the long form
+  `--outdir` (the ones in this README do).
+- **The AMR data is per-CPU**: `ramses_rt_00088/output_00088/amr_00088.out00001`
+  .. `.out00016` each hold one CPU's data (its own `numbl`). yt reads each file
+  separately; its per-domain oct count is `numbl[min_level:, cpu].sum()`. To
+  reconstruct the whole AMR tree, parse one file per CPU. See
+  [`yt_comparison_test/`](yt_comparison_test/README.md).
+- **`nx` in the header (`[1,1,1]`) is not the domain size** — it is the number of
+  root coarse cells per direction; yt's `domain_dimensions` (`[128,128,128]`) is
+  the base grid resolution (`2**levelmin`). They measure different things.
+- `ksc` prints harmless style warnings for this spec (`num_vector` vs `nrows`,
+  canonical `ASCII`, etc.).
+
 ## Test
 
 See [`python_backend_test/README.md`](python_backend_test/README.md) for how to
