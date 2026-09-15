@@ -1,0 +1,11 @@
+# Data files — never commit
+*.tar.gz
+*.out
+output_00088/
+Ramses_rt_00088/
+# Editors / OS
+.DS_Store
+.vscode/
+__pycache__/
+*.pyc
+.pytest_cache/
